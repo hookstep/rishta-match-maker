@@ -13,6 +13,19 @@ import { toast } from "sonner";
 import { ArrowLeft, Upload, X, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 
+const Field = ({ label, field, type = "text", placeholder = "", value, onChange }: { label: string; field: string; type?: string; placeholder?: string; value: string; onChange: (field: string, value: string) => void }) => (
+  <div className="space-y-1.5">
+    <Label htmlFor={field}>{label}</Label>
+    <Input
+      id={field}
+      type={type}
+      placeholder={placeholder}
+      value={value}
+      onChange={(e) => onChange(field, e.target.value)}
+    />
+  </div>
+);
+
 const ProfileForm = () => {
   const { id } = useParams();
   const isEditing = !!id && id !== "new";
@@ -176,19 +189,6 @@ const ProfileForm = () => {
     return data.publicUrl;
   };
 
-  const Field = ({ label, field, type = "text", placeholder = "" }: { label: string; field: string; type?: string; placeholder?: string }) => (
-    <div className="space-y-1.5">
-      <Label htmlFor={field}>{label}</Label>
-      <Input
-        id={field}
-        type={type}
-        placeholder={placeholder}
-        value={(form as any)[field]}
-        onChange={(e) => updateField(field, e.target.value)}
-      />
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-md">
@@ -224,18 +224,18 @@ const ProfileForm = () => {
                   </div>
                 </RadioGroup>
               </div>
-              <Field label="Marital Status" field="marital_status" placeholder="e.g., Unmarried, Divorced" />
+              <Field label="Marital Status" field="marital_status" placeholder="e.g., Unmarried, Divorced" value={form.marital_status} onChange={updateField} />
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Surname" field="surname" />
-                <Field label="Name *" field="name" />
+                <Field label="Surname" field="surname" value={form.surname} onChange={updateField} />
+                <Field label="Name *" field="name" value={form.name} onChange={updateField} />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Date of Birth" field="date_of_birth" type="date" />
-                <Field label="Time of Birth" field="time_of_birth" placeholder="e.g., 10:30 AM" />
+                <Field label="Date of Birth" field="date_of_birth" type="date" value={form.date_of_birth} onChange={updateField} />
+                <Field label="Time of Birth" field="time_of_birth" placeholder="e.g., 10:30 AM" value={form.time_of_birth} onChange={updateField} />
               </div>
-              <Field label="Place of Birth" field="place_of_birth" />
+              <Field label="Place of Birth" field="place_of_birth" value={form.place_of_birth} onChange={updateField} />
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Height" field="height" placeholder="e.g., 5'8&quot;" />
+                <Field label="Height" field="height" placeholder="e.g., 5'8&quot;" value={form.height} onChange={updateField} />
                 <div className="space-y-2">
                   <Label>Manglik</Label>
                   <RadioGroup value={form.manglik} onValueChange={(v) => updateField("manglik", v)} className="flex gap-4 pt-2">
@@ -250,10 +250,10 @@ const ProfileForm = () => {
                   </RadioGroup>
                 </div>
               </div>
-              <Field label="Qualification 🎓" field="qualification" />
-              <Field label="Occupation" field="occupation" />
-              <Field label="Income" field="income" />
-              <Field label="🏢 Work Location" field="work_location" />
+              <Field label="Qualification 🎓" field="qualification" value={form.qualification} onChange={updateField} />
+              <Field label="Occupation" field="occupation" value={form.occupation} onChange={updateField} />
+              <Field label="Income" field="income" value={form.income} onChange={updateField} />
+              <Field label="🏢 Work Location" field="work_location" value={form.work_location} onChange={updateField} />
             </CardContent>
           </Card>
 
@@ -263,15 +263,15 @@ const ProfileForm = () => {
               <CardTitle className="text-lg">💠 Family Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Field label="Religion / Gotar / Caste" field="religion" placeholder="Religion" />
+              <Field label="Religion / Gotar / Caste" field="religion" placeholder="Religion" value={form.religion} onChange={updateField} />
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Gotar" field="gotar" />
-                <Field label="Caste" field="caste" />
+                <Field label="Gotar" field="gotar" value={form.gotar} onChange={updateField} />
+                <Field label="Caste" field="caste" value={form.caste} onChange={updateField} />
               </div>
-              <Field label="Father's Occupation" field="father_occupation" />
-              <Field label="Mother's Occupation" field="mother_occupation" />
-              <Field label="Siblings" field="siblings" placeholder="e.g., 1 Brother, 1 Sister" />
-              <Field label="Family Class" field="family_class" />
+              <Field label="Father's Occupation" field="father_occupation" value={form.father_occupation} onChange={updateField} />
+              <Field label="Mother's Occupation" field="mother_occupation" value={form.mother_occupation} onChange={updateField} />
+              <Field label="Siblings" field="siblings" placeholder="e.g., 1 Brother, 1 Sister" value={form.siblings} onChange={updateField} />
+              <Field label="Family Class" field="family_class" value={form.family_class} onChange={updateField} />
             </CardContent>
           </Card>
 
@@ -281,8 +281,8 @@ const ProfileForm = () => {
               <CardTitle className="text-lg">📍 Additional Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Field label="🏠 Residence City" field="residence_city" />
-              <Field label="Property Details" field="property_details" />
+              <Field label="🏠 Residence City" field="residence_city" value={form.residence_city} onChange={updateField} />
+              <Field label="Property Details" field="property_details" value={form.property_details} onChange={updateField} />
               <div className="space-y-1.5">
                 <Label htmlFor="notes">👉🏻 Notes</Label>
                 <Textarea
