@@ -7,16 +7,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate, Link } from "react-router-dom";
-import { Search, Plus, LogOut, Heart, User, MapPin, Calendar } from "lucide-react";
-import { format, differenceInYears } from "date-fns";
+import { UserButton } from "@clerk/clerk-react";
+import { Search, Plus, Heart, User, MapPin, Calendar, Compass, Settings } from "lucide-react";
+import { MobileRecommendBanner } from "@/components/MobileRecommendBanner";
+import { differenceInYears } from "date-fns";
+import { sortProfilePhotos, type ProfilePhotoRow } from "@/lib/profile-photos";
 
 const Dashboard = () => {
-  const { user, isAdmin, signOut } = useAuth();
+  const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [genderFilter, setGenderFilter] = useState<string>("all");
 
-  const { data: profiles, isLoading } = useQuery({
+  const { data: profiles, isLoading, error: profilesError } = useQuery({
     queryKey: ["profiles", search, genderFilter],
     queryFn: async () => {
       let query = supabase.from("profiles").select("*, profile_photos(storage_path, display_order)");
@@ -57,18 +60,32 @@ const Dashboard = () => {
             <Heart className="h-6 w-6 text-primary" />
             <span className="text-lg font-bold font-serif">Rishte Wale Sardarji</span>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/discover">
+                <Compass className="mr-1 h-4 w-4" /> Discover
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/settings">
+                <Settings className="mr-1 h-4 w-4" /> Prefs
+              </Link>
+            </Button>
+            {isAdmin && (
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/admin">Admin</Link>
+              </Button>
+            )}
             <Button onClick={() => navigate("/profile/new")} size="sm">
               <Plus className="mr-1 h-4 w-4" /> Add Profile
             </Button>
-            <Button variant="ghost" size="icon" onClick={signOut}>
-              <LogOut className="h-4 w-4" />
-            </Button>
+            <UserButton afterSignOutUrl="/auth" />
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-6 space-y-6">
+      <main className="mx-auto max-w-7xl space-y-6 px-4 py-6">
+        <MobileRecommendBanner />
         {/* Search & Filters */}
         <div className="flex flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
@@ -92,8 +109,19 @@ const Dashboard = () => {
           </Select>
         </div>
 
+        {profilesError && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-center text-sm">
+            <p className="font-medium text-destructive">Could not load profiles</p>
+            <p className="mt-1 text-muted-foreground">{profilesError.message}</p>
+            <p className="mt-2 text-muted-foreground">
+              If this started after Clerk: leave <code className="rounded bg-muted px-1">VITE_SUPABASE_CLERK_JWT</code> unset
+              or false until Supabase accepts Clerk JWTs; or fix RLS for the anon role.
+            </p>
+          </div>
+        )}
+
         {/* Profile Grid */}
-        {isLoading ? (
+        {!profilesError && isLoading && (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[...Array(6)].map((_, i) => (
               <Card key={i} className="animate-pulse">
@@ -105,7 +133,9 @@ const Dashboard = () => {
               </Card>
             ))}
           </div>
-        ) : profiles?.length === 0 ? (
+        )}
+
+        {!profilesError && !isLoading && profiles?.length === 0 && (
           <div className="text-center py-20 space-y-3">
             <User className="mx-auto h-12 w-12 text-muted-foreground/50" />
             <h3 className="text-lg font-medium">No profiles found</h3>
@@ -116,11 +146,13 @@ const Dashboard = () => {
               <Plus className="mr-1 h-4 w-4" /> Add Profile
             </Button>
           </div>
-        ) : (
+        )}
+
+        {!profilesError && !isLoading && profiles && profiles.length > 0 && (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {profiles?.map((profile) => {
-              const photos = profile.profile_photos as any[];
-              const firstPhoto = photos?.sort((a: any, b: any) => a.display_order - b.display_order)?.[0];
+            {profiles.map((profile) => {
+              const photos = sortProfilePhotos(profile.profile_photos as ProfilePhotoRow[] | null);
+              const firstPhoto = photos[0];
               const age = getAge(profile.date_of_birth);
 
               return (

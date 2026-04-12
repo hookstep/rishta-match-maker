@@ -1,4 +1,4 @@
-import { SignIn } from "@clerk/clerk-react";
+import { SignUp } from "@clerk/clerk-react";
 import { Heart } from "lucide-react";
 
 const appearance = {
@@ -19,7 +19,7 @@ const appearance = {
   },
 } as const;
 
-const Auth = () => (
+const SignUpPage = () => (
   <div className="flex min-h-screen items-center justify-center bg-background p-4">
     <div className="w-full max-w-md space-y-6">
       <div className="space-y-2 text-center">
@@ -30,15 +30,15 @@ const Auth = () => (
         <p className="text-muted-foreground">Matrimonial Profile Manager</p>
       </div>
 
-      <SignIn
+      <SignUp
         appearance={appearance}
         routing="path"
-        path="/auth"
-        signUpUrl="/sign-up"
+        path="/sign-up"
+        signInUrl="/auth"
         forceRedirectUrl="/dashboard"
       />
     </div>
   </div>
 );
 
-export default Auth;
+export default SignUpPage;

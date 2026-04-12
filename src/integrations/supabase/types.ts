@@ -64,6 +64,8 @@ export type Database = {
           name: string
           notes: string | null
           occupation: string | null
+          /** Run `supabase/migrations/20260411_clerk_published.sql` if this column is missing. */
+          published: boolean | null
           place_of_birth: string | null
           property_details: string | null
           qualification: string | null
@@ -93,6 +95,7 @@ export type Database = {
           name: string
           notes?: string | null
           occupation?: string | null
+          published?: boolean | null
           place_of_birth?: string | null
           property_details?: string | null
           qualification?: string | null
@@ -122,6 +125,7 @@ export type Database = {
           name?: string
           notes?: string | null
           occupation?: string | null
+          published?: boolean | null
           place_of_birth?: string | null
           property_details?: string | null
           qualification?: string | null
