@@ -1,69 +1,43 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { useUser, useClerk, useAuth as useClerkAuth } from "@clerk/clerk-react";
+import { useMemo } from "react";
 
-type AuthContextType = {
-  user: User | null;
-  session: Session | null;
-  loading: boolean;
-  isAdmin: boolean;
-  signOut: () => Promise<void>;
-};
+function adminEmailList(): string[] {
+  const injected =
+    typeof __RISHTA_ADMIN_EMAILS__ !== "undefined" ? String(__RISHTA_ADMIN_EMAILS__).trim() : "";
+  const combined = [
+    import.meta.env.VITE_ADMIN_EMAILS,
+    import.meta.env.NEXT_PUBLIC_ADMIN_EMAILS,
+    injected,
+  ]
+    .filter((x): x is string => typeof x === "string" && x.trim().length > 0)
+    .join(",");
+  return combined
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+}
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  session: null,
-  loading: true,
-  isAdmin: false,
-  signOut: async () => {},
-});
+const adminEmails = adminEmailList();
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+export function useAuth() {
+  const { user, isLoaded: userLoaded } = useUser();
+  const { isSignedIn, isLoaded: sessionLoaded } = useClerkAuth();
+  const { signOut } = useClerk();
 
-  const checkAdmin = async (userId: string) => {
-    const { data } = await supabase.rpc("is_admin", { _user_id: userId });
-    setIsAdmin(!!data);
+  const loading = !userLoaded || !sessionLoaded;
+
+  const isAdmin = useMemo(() => {
+    const email = user?.primaryEmailAddress?.emailAddress?.toLowerCase();
+    if (!email) return false;
+    return adminEmails.includes(email);
+  }, [user]);
+
+  return {
+    /** Clerk user; use `user?.id` for `user_id` in profiles. */
+    user,
+    loading,
+    isAdmin,
+    isSignedIn: Boolean(isSignedIn),
+    signOut: () => signOut({ redirectUrl: "/auth" }),
   };
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          setTimeout(() => checkAdmin(session.user.id), 0);
-        } else {
-          setIsAdmin(false);
-        }
-        setLoading(false);
-      }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdmin(session.user.id);
-      }
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, signOut }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-export const useAuth = () => useContext(AuthContext);
+}

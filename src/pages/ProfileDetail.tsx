@@ -8,6 +8,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { ArrowLeft, Edit, Share2, FileDown, Heart, User } from "lucide-react";
 import { toast } from "sonner";
 import { differenceInYears } from "date-fns";
+import { sortProfilePhotos, type ProfilePhotoRow } from "@/lib/profile-photos";
 
 const ProfileDetail = () => {
   const { id } = useParams();
@@ -115,7 +116,7 @@ const ProfileDetail = () => {
     );
   }
 
-  const photos = (profile.profile_photos as any[])?.sort((a: any, b: any) => a.display_order - b.display_order) || [];
+  const photos = sortProfilePhotos(profile.profile_photos as ProfilePhotoRow[] | null);
   const age = profile.date_of_birth ? differenceInYears(new Date(), new Date(profile.date_of_birth)) : null;
 
   const InfoRow = ({ label, value }: { label: string; value: string | null | undefined }) => {
@@ -156,7 +157,7 @@ const ProfileDetail = () => {
           <div className="px-10">
             <Carousel>
               <CarouselContent>
-                {photos.map((photo: any) => (
+                {photos.map((photo) => (
                   <CarouselItem key={photo.id}>
                     <div className="aspect-[3/4] sm:aspect-[4/3] rounded-xl overflow-hidden bg-muted">
                       <img

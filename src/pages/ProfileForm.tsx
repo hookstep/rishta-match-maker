@@ -9,9 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, X, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
+import type { ProfilePhotoRow } from "@/lib/profile-photos";
 
 const Field = ({ label, field, type = "text", placeholder = "", value, onChange }: { label: string; field: string; type?: string; placeholder?: string; value: string; onChange: (field: string, value: string) => void }) => (
   <div className="space-y-1.5">
@@ -57,10 +59,11 @@ const ProfileForm = () => {
     residence_city: "",
     property_details: "",
     notes: "",
+    published: true,
   });
 
   const [photos, setPhotos] = useState<File[]>([]);
-  const [existingPhotos, setExistingPhotos] = useState<any[]>([]);
+  const [existingPhotos, setExistingPhotos] = useState<ProfilePhotoRow[]>([]);
   const [saving, setSaving] = useState(false);
 
   // Load existing profile for editing
@@ -99,6 +102,7 @@ const ProfileForm = () => {
           residence_city: data.residence_city || "",
           property_details: data.property_details || "",
           notes: data.notes || "",
+          published: data.published !== false,
         });
         setExistingPhotos(data.profile_photos || []);
       }
@@ -177,8 +181,8 @@ const ProfileForm = () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       toast.success(isEditing ? "Profile updated!" : "Profile created!");
       navigate(`/profile/${profileId}`);
-    } catch (error: any) {
-      toast.error(error.message || "Something went wrong");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Something went wrong");
     } finally {
       setSaving(false);
     }
@@ -292,6 +296,21 @@ const ProfileForm = () => {
                   placeholder="Any additional notes..."
                   rows={3}
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Discover</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-medium">Show on Discover</p>
+                  <p className="text-sm text-muted-foreground">Hide a profile without deleting it.</p>
+                </div>
+                <Switch checked={form.published} onCheckedChange={(v) => setForm((p) => ({ ...p, published: v }))} />
               </div>
             </CardContent>
           </Card>

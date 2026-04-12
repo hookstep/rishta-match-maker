@@ -1,107 +1,44 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
+import { SignIn } from "@clerk/clerk-react";
 import { Heart } from "lucide-react";
 
-const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+const appearance = {
+  variables: {
+    colorPrimary: "hsl(25 80% 52%)",
+    colorText: "hsl(20 20% 12%)",
+    colorTextSecondary: "hsl(20 10% 45%)",
+    colorBackground: "hsl(0 0% 100%)",
+    colorInputBackground: "hsl(30 25% 97%)",
+    colorInputText: "hsl(20 20% 12%)",
+    borderRadius: "0.75rem",
+  },
+  elements: {
+    card: "shadow-[var(--shadow-elevated)] border border-border",
+    rootBox: "w-full",
+    headerTitle: "font-serif text-xl",
+    socialButtonsBlockButton: "border-border",
+  },
+} as const;
 
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        toast.error(error.message);
-      } else {
-        navigate("/dashboard");
-      }
-    } else {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: window.location.origin },
-      });
-      if (error) {
-        toast.error(error.message);
-      } else {
-        toast.success("Account created! Please check your email to verify.");
-      }
-    }
-    setLoading(false);
-  };
-
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-2">
-            <Heart className="w-8 h-8 text-primary" />
-          </div>
-          <h1 className="text-3xl font-bold">Rishte Wale Sardarji</h1>
-          <p className="text-muted-foreground">Matrimonial Profile Manager</p>
+const Auth = () => (
+  <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="w-full max-w-md space-y-6">
+      <div className="space-y-2 text-center">
+        <div className="mb-2 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+          <Heart className="h-8 w-8 text-primary" />
         </div>
-
-        <Card className="shadow-[var(--shadow-elevated)]">
-          <CardHeader>
-            <CardTitle className="text-xl">{isLogin ? "Welcome Back" : "Create Account"}</CardTitle>
-            <CardDescription>
-              {isLogin ? "Sign in to manage profiles" : "Sign up to get started"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleAuth} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Please wait..." : isLogin ? "Sign In" : "Sign Up"}
-              </Button>
-            </form>
-            <div className="mt-4 text-center text-sm">
-              <button
-                type="button"
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-primary hover:underline"
-              >
-                {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-              </button>
-            </div>
-          </CardContent>
-        </Card>
+        <h1 className="font-serif text-3xl font-bold">Rishte Wale Sardarji</h1>
+        <p className="text-muted-foreground">Matrimonial Profile Manager</p>
       </div>
+
+      <SignIn
+        appearance={appearance}
+        routing="path"
+        path="/auth"
+        signUpUrl="/sign-up"
+        forceRedirectUrl="/dashboard"
+      />
     </div>
-  );
-};
+  </div>
+);
 
 export default Auth;
