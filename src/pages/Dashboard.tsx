@@ -1,65 +1,92 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useMyProfile } from "@/hooks/useMyProfile";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate, Link } from "react-router-dom";
-import { Search, Plus, LogOut, Heart, User, MapPin, Calendar } from "lucide-react";
-import { format, differenceInYears } from "date-fns";
+import { Search, Plus, LogOut, Heart, User, Shield } from "lucide-react";
+import { fetchProfilesFeed } from "@/lib/fetchProfilesFeed";
+import { SubscribeButton } from "@/components/SubscribeButton";
+import { ProfileFeedCardGrid } from "@/components/ProfileFeedCardGrid";
+import { partitionFeedByOwnerSubscription } from "@/lib/partitionAdminFeed";
 
 const Dashboard = () => {
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, isAdmin, isPaid, entitlementsLoading, signOut } = useAuth();
   const navigate = useNavigate();
+  const { data: myProfile, isLoading: myProfileLoading } = useMyProfile({
+    enabled: !entitlementsLoading,
+  });
   const [search, setSearch] = useState("");
   const [genderFilter, setGenderFilter] = useState<string>("all");
 
-  const { data: profiles, isLoading } = useQuery({
-    queryKey: ["profiles", search, genderFilter],
+  const { data: profiles, isLoading, error: profilesError } = useQuery({
+    queryKey: ["profiles-feed", search, genderFilter, user?.id, isPaid, isAdmin],
     queryFn: async () => {
-      let query = supabase.from("profiles").select("*, profile_photos(storage_path, display_order)");
-
-      if (genderFilter !== "all") {
-        query = query.eq("gender", genderFilter);
-      }
-
-      if (search.trim()) {
-        query = query.or(
-          `name.ilike.%${search}%,surname.ilike.%${search}%,residence_city.ilike.%${search}%,caste.ilike.%${search}%,occupation.ilike.%${search}%`
-        );
-      }
-
-      query = query.order("created_at", { ascending: false });
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
+      if (!user?.id) return [];
+      return fetchProfilesFeed({
+        search,
+        genderFilter,
+        viewerUserId: user.id,
+        isPaid,
+        isAdmin,
+      });
     },
+    enabled: !!user && !entitlementsLoading,
   });
 
-  const getPhotoUrl = (path: string) => {
-    const { data } = supabase.storage.from("profile-photos").getPublicUrl(path);
-    return data.publicUrl;
-  };
+  const feedSections = useMemo(
+    () => partitionFeedByOwnerSubscription(profiles, !!isAdmin),
+    [profiles, isAdmin],
+  );
 
-  const getAge = (dob: string | null) => {
-    if (!dob) return null;
-    return differenceInYears(new Date(), new Date(dob));
-  };
+  if (entitlementsLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (!isAdmin && myProfileLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
           <Link to="/dashboard" className="flex items-center gap-2">
             <Heart className="h-6 w-6 text-primary" />
             <span className="text-lg font-bold font-serif">Rishte Wale Sardarji</span>
           </Link>
-          <div className="flex items-center gap-2">
-            <Button onClick={() => navigate("/profile/new")} size="sm">
-              <Plus className="mr-1 h-4 w-4" /> Add Profile
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {!isAdmin && !isPaid && <SubscribeButton className="hidden sm:inline-flex" />}
+            {myProfile?.id && (
+              <Button variant="outline" size="sm" onClick={() => navigate(`/profile/${myProfile.id}/edit`)}>
+                Update my profile
+              </Button>
+            )}
+            {isAdmin && (
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/admin">
+                  <Shield className="mr-1 h-4 w-4" /> Admin directory
+                </Link>
+              </Button>
+            )}
+            <Button
+              onClick={() => navigate("/profile/new")}
+              size="sm"
+              disabled={!isAdmin}
+              title={!isAdmin ? "Only admins can add profiles for other accounts" : undefined}
+            >
+              <Plus className="mr-1 h-4 w-4" /> {isAdmin ? "Add user & profile" : "Add profile"}
             </Button>
             <Button variant="ghost" size="icon" onClick={signOut}>
               <LogOut className="h-4 w-4" />
@@ -69,7 +96,54 @@ const Dashboard = () => {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-6 space-y-6">
-        {/* Search & Filters */}
+        {!isAdmin && !myProfile?.id && !myProfileLoading && (
+          <Card className="border-border bg-muted/30">
+            <CardContent className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">
+                Add your own matrimonial profile when you are ready. You can still browse other listings.
+              </p>
+              <Button size="sm" onClick={() => navigate("/profile/new")}>
+                Create my profile
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {profilesError && (
+          <Card className="border-destructive/40 bg-destructive/5">
+            <CardContent className="py-3 text-sm">
+              <p className="font-medium text-destructive">Could not load listings</p>
+              <p className="text-muted-foreground">{profilesError.message}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {!isAdmin && !isPaid && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-medium">Free preview</p>
+                <p className="text-sm text-muted-foreground">
+                  You see one photo per listing; names and biodata stay hidden until you subscribe. Our team connects
+                  matches over WhatsApp after you upgrade.
+                </p>
+              </div>
+              <SubscribeButton />
+            </CardContent>
+          </Card>
+        )}
+
+        {isAdmin && (
+          <Card className="border-dashed bg-muted/20">
+            <CardContent className="py-3 text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">Admin:</span> New listings appear at the top. Use{" "}
+              <strong>Add user &amp; profile</strong> to create a listing for a member (paste their auth user id on the
+              form). Below, <strong>Paid subscribers</strong> vs <strong>Free / not subscribed</strong> is based on each
+              listing owner&apos;s subscription.
+            </CardContent>
+          </Card>
+        )}
+
         <div className="flex flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -92,7 +166,6 @@ const Dashboard = () => {
           </Select>
         </div>
 
-        {/* Profile Grid */}
         {isLoading ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[...Array(6)].map((_, i) => (
@@ -110,72 +183,28 @@ const Dashboard = () => {
             <User className="mx-auto h-12 w-12 text-muted-foreground/50" />
             <h3 className="text-lg font-medium">No profiles found</h3>
             <p className="text-muted-foreground">
-              {search ? "Try a different search term" : "Add your first profile to get started"}
+              {search ? "Try a different search term" : "No listings yet"}
             </p>
-            <Button onClick={() => navigate("/profile/new")}>
-              <Plus className="mr-1 h-4 w-4" /> Add Profile
-            </Button>
+          </div>
+        ) : feedSections.showSections ? (
+          <div className="space-y-10">
+            <section className="space-y-3">
+              <div className="flex items-baseline justify-between gap-2 border-b pb-2">
+                <h2 className="text-lg font-semibold">Paid subscribers</h2>
+                <span className="text-sm text-muted-foreground">{feedSections.paid.length} listing(s)</span>
+              </div>
+              <ProfileFeedCardGrid profiles={feedSections.paid} emptyLabel="No listings from paid members." />
+            </section>
+            <section className="space-y-3">
+              <div className="flex items-baseline justify-between gap-2 border-b pb-2">
+                <h2 className="text-lg font-semibold">Free / not subscribed</h2>
+                <span className="text-sm text-muted-foreground">{feedSections.free.length} listing(s)</span>
+              </div>
+              <ProfileFeedCardGrid profiles={feedSections.free} emptyLabel="No listings from free members." />
+            </section>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {profiles?.map((profile) => {
-              const photos = profile.profile_photos as any[];
-              const firstPhoto = photos?.sort((a: any, b: any) => a.display_order - b.display_order)?.[0];
-              const age = getAge(profile.date_of_birth);
-
-              return (
-                <Card
-                  key={profile.id}
-                  className="overflow-hidden cursor-pointer hover:shadow-[var(--shadow-elevated)] transition-shadow group"
-                  onClick={() => navigate(`/profile/${profile.id}`)}
-                >
-                  <div className="aspect-[4/3] bg-muted relative overflow-hidden">
-                    {firstPhoto ? (
-                      <img
-                        src={getPhotoUrl(firstPhoto.storage_path)}
-                        alt={`${profile.name}'s photo`}
-                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center">
-                        <User className="h-16 w-16 text-muted-foreground/30" />
-                      </div>
-                    )}
-                    <div className="absolute top-2 right-2">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        profile.gender === "Male"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-pink-100 text-pink-800"
-                      }`}>
-                        {profile.gender}
-                      </span>
-                    </div>
-                  </div>
-                  <CardContent className="p-4 space-y-1">
-                    <h3 className="font-semibold text-lg truncate">
-                      {profile.name} {profile.surname}
-                    </h3>
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                      {age && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5" /> {age} yrs
-                        </span>
-                      )}
-                      {profile.residence_city && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3.5 w-3.5" /> {profile.residence_city}
-                        </span>
-                      )}
-                    </div>
-                    {profile.occupation && (
-                      <p className="text-sm text-muted-foreground truncate">{profile.occupation}</p>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+          <ProfileFeedCardGrid profiles={profiles ?? []} />
         )}
       </main>
     </div>
