@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,6 +9,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { OptionalAdSenseLoader } from "@/components/OptionalAdSenseLoader";
+import { resetSeoToDefaults } from "@/lib/seo";
 import { defaultAppEmail } from "@/lib/site";
 import {
   Heart,
@@ -18,12 +20,14 @@ import {
   MessageCircle,
   CheckCircle2,
   Star,
-  Smartphone,
   ChevronRight,
 } from "lucide-react";
 
 const shaadiGreen = "#00a85a";
 const shaadiGreenDark = "#008c4d";
+
+/** Hero photography (GoDaddy / Getty); used as full-bleed background behind scrim. */
+const HERO_IMAGE_URL = "https://img1.wsimg.com/isteam/getty/2148405076";
 
 const stats = [
   { label: "Privacy-first browse", value: "Preview", sub: "Respectful masked listings for free members" },
@@ -75,6 +79,7 @@ const footerExplore = [
 ];
 
 const navSecondary = [
+  { label: "About", href: "#about" },
   { label: "Success stories", href: "#stories" },
   { label: "How it works", href: "#experience" },
   { label: "FAQ", href: "#faq" },
@@ -103,12 +108,16 @@ const Home = () => {
     navigate("/auth");
   };
 
+  useLayoutEffect(() => {
+    resetSeoToDefaults();
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#f6f3ef] text-foreground">
       {/* Header — aligned with rishtewalesardarji.in: brand left, sign-in actions top-right */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0c2f24]/95 text-white backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:gap-4">
-          <Link to="/" className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+          <Link to="/" className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 sm:h-11 sm:w-11">
               <Heart className="h-5 w-5 fill-[#f0e4c8] text-[#f0e4c8]" />
             </div>
@@ -116,6 +125,20 @@ const Home = () => {
               Rishtewale Sardarji
             </span>
           </Link>
+          <nav
+            className="mx-2 hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex lg:gap-2"
+            aria-label="Page sections"
+          >
+            {navSecondary.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="whitespace-nowrap rounded-full border border-white/20 bg-black/30 px-3 py-1.5 text-xs font-semibold text-white/95 backdrop-blur-sm transition hover:border-white/35 hover:bg-black/45 hover:text-white sm:text-sm"
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <Button
               variant="ghost"
@@ -134,44 +157,59 @@ const Home = () => {
             </Button>
           </div>
         </div>
-      </header>
-
-      {/* Hero — marketing homepage (rishtewalesardarji.in) */}
-      <section className="relative overflow-hidden border-b border-[#0a241c]/30">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a4d3a] via-[#0f3528] to-[#071812]" />
-        <div
-          className="pointer-events-none absolute inset-0 opacity-30"
-          style={{
-            background:
-              "radial-gradient(ellipse 90% 60% at 50% -10%, rgba(232,213,168,0.45), transparent 55%), radial-gradient(ellipse 50% 40% at 100% 100%, rgba(0,90,60,0.35), transparent)",
-          }}
-        />
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 40m-2 0a2 2 0 1 1 4 0a2 2 0 1 1-4 0' fill='%23ffffff' fill-opacity='0.9'/%3E%3C/svg%3E")`,
-          }}
-        />
-        <div className="relative mx-auto flex min-h-[52vh] max-w-3xl flex-col items-center justify-center px-4 py-14 text-center sm:min-h-[56vh] sm:py-20 md:min-h-[60vh]">
-          <p className="mb-5 text-[11px] font-semibold uppercase tracking-[0.42em] text-[#b8dcc8] sm:text-xs">
-            Rishtewale Sardarji
-          </p>
-          <h1 className="font-serif text-[1.85rem] font-bold leading-[1.2] tracking-tight text-white sm:text-4xl md:text-5xl lg:text-[3.25rem]">
-            Connecting Hearts,
-            <br />
-            Building Futures
-          </h1>
-          <p className="mx-auto mt-6 max-w-lg text-sm leading-relaxed text-white/75 sm:text-base md:text-lg">
-            The same spirit as our public site — thoughtful matrimonial profiles, family dignity, and a clear path from
-            browse to conversation.
-          </p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-[#c8e6d6]/90">
+        <nav
+          className="border-t border-white/10 lg:hidden"
+          aria-label="Page sections"
+        >
+          <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto px-4 py-2.5">
             {navSecondary.map((item) => (
-              <a key={item.href} href={item.href} className="underline-offset-4 hover:text-white hover:underline">
+              <a
+                key={item.href}
+                href={item.href}
+                className="shrink-0 rounded-full border border-white/20 bg-black/35 px-3 py-1.5 text-xs font-semibold text-white/95 backdrop-blur-sm whitespace-nowrap"
+              >
                 {item.label}
               </a>
             ))}
           </div>
+        </nav>
+      </header>
+
+      <main id="main-content">
+      {/* Hero — photo + scrim (matches brochure feel; image from Getty via GoDaddy CDN) */}
+      <section className="relative overflow-hidden border-b border-[#0a241c]/30">
+        <img
+          src={HERO_IMAGE_URL}
+          alt="Bride and groom in traditional Indian wedding attire exchanging garlands with family."
+          className="absolute inset-0 h-full min-h-[58vh] w-full object-cover object-[center_18%] sm:min-h-[64vh] md:min-h-[70vh] lg:min-h-[82vh] xl:min-h-[88vh] lg:object-[center_12%]"
+          fetchPriority="high"
+        />
+        {/* Lighter scrim at top (faces); stronger at bottom for headline contrast */}
+        <div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/70"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,rgba(2,12,9,0.92)_0%,rgba(2,12,9,0.55)_42%,transparent_68%)]"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.12]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 40m-2 0a2 2 0 1 1 4 0a2 2 0 1 1-4 0' fill='%23ffffff' fill-opacity='0.9'/%3E%3C/svg%3E")`,
+          }}
+          aria-hidden
+        />
+        <div className="relative z-10 mx-auto flex min-h-[58vh] max-w-3xl flex-col items-center justify-end px-4 pb-10 pt-28 text-center sm:min-h-[64vh] sm:pb-14 sm:pt-36 md:min-h-[70vh] md:pb-16 md:pt-40 lg:min-h-[82vh] lg:pb-20 lg:pt-48 xl:min-h-[88vh] xl:pb-24 xl:pt-52">
+          <h1 className="font-serif text-[1.85rem] font-bold leading-[1.2] tracking-tight text-white [text-shadow:0_3px_28px_rgba(0,0,0,0.95),0_1px_2px_rgba(0,0,0,0.9)] sm:text-4xl md:text-5xl lg:text-[3.25rem]">
+            Connecting Hearts,
+            <br />
+            Building Futures
+          </h1>
+          <p className="mx-auto mt-6 max-w-lg text-sm font-medium leading-relaxed text-white/95 [text-shadow:0_2px_16px_rgba(0,0,0,0.9)] sm:text-base md:text-lg">
+            The same spirit as our public site — thoughtful matrimonial profiles, family dignity, and a clear path from
+            browse to conversation.
+          </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
             <Button
               size="lg"
@@ -183,12 +221,46 @@ const Home = () => {
             <Button
               size="lg"
               variant="outline"
-              className="rounded-full border-white/35 bg-transparent px-8 font-semibold text-white hover:bg-white/10"
+              className="rounded-full border-2 border-white/80 bg-black/35 px-8 font-semibold text-white shadow-[0_4px_20px_rgba(0,0,0,0.5)] backdrop-blur-sm hover:bg-black/50"
               onClick={goLogin}
             >
               Sign in
             </Button>
           </div>
+        </div>
+      </section>
+
+      <section
+        id="about"
+        className="border-b border-black/[0.06] bg-white py-10 sm:py-12"
+        aria-labelledby="about-heading"
+      >
+        <div className="mx-auto max-w-3xl px-4 sm:text-left text-center">
+          <h2 id="about-heading" className="font-serif text-2xl font-bold text-[#0f3528] sm:text-3xl">
+            About Rishtewale Sardarji
+          </h2>
+          <p className="mt-4 text-sm leading-relaxed text-[#444] sm:text-base">
+            <strong>Rishtewale Sardarji</strong> is an India-focused matrimony desk and web application for families and
+            individuals seeking marriage-oriented introductions—not casual dating. The service uses structured biodata,
+            filters such as community and profession, and privacy-conscious previews for free members, with optional
+            premium access to full listings where the product allows.
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-[#444] sm:text-base">
+            Enquiries are handled through our desk email; we help move from browsing to conversation with dignity when you
+            are ready. Policies:{" "}
+            <Link to="/privacy" className="font-semibold text-[#00a85a] hover:underline">
+              Privacy
+            </Link>
+            ,{" "}
+            <Link to="/terms" className="font-semibold text-[#00a85a] hover:underline">
+              Terms
+            </Link>
+            ,{" "}
+            <Link to="/safety" className="font-semibold text-[#00a85a] hover:underline">
+              Online safety
+            </Link>
+            .
+          </p>
         </div>
       </section>
 
@@ -505,31 +577,7 @@ const Home = () => {
           </div>
         </div>
       </section>
-
-      {/* App strip — Shaadi “Get the app” */}
-      <section className="border-t border-black/10 py-10" style={{ background: `linear-gradient(90deg, ${shaadiGreenDark}, ${shaadiGreen})` }}>
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-4 text-white sm:flex-row">
-          <div className="flex items-center gap-4">
-            <Smartphone className="h-14 w-14 shrink-0 opacity-95" />
-            <div>
-              <p className="font-serif text-xl font-bold">Use Rishtewale Sardarji on the go</p>
-              <p className="text-sm text-white/85">Web app today — native apps can follow the same brand.</p>
-            </div>
-          </div>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Button
-              variant="secondary"
-              className="h-11 rounded-lg border-0 bg-black/25 px-5 text-white hover:bg-black/35"
-              onClick={goRegister}
-            >
-              Continue on web
-            </Button>
-            <Button variant="outline" className="h-11 rounded-lg border-white/40 bg-transparent text-white hover:bg-white/10" onClick={goLogin}>
-              Log in
-            </Button>
-          </div>
-        </div>
-      </section>
+      </main>
 
       {/* Footer — Shaadi-style columns */}
       <footer className="bg-[#1a1a1a] py-12 text-white">
@@ -567,17 +615,17 @@ const Home = () => {
             <p className="mb-3 text-sm font-bold uppercase tracking-wider text-white/90">Privacy &amp; you</p>
             <ul className="space-y-2 text-sm text-white/65">
               <li>
-                <Link to="/auth" className="hover:text-white">
+                <Link to="/terms" className="hover:text-white">
                   Terms of use
                 </Link>
               </li>
               <li>
-                <Link to="/auth" className="hover:text-white">
+                <Link to="/privacy" className="hover:text-white">
                   Privacy policy
                 </Link>
               </li>
               <li>
-                <Link to="/auth" className="hover:text-white">
+                <Link to="/safety" className="hover:text-white">
                   Be safe online
                 </Link>
               </li>
@@ -586,6 +634,11 @@ const Home = () => {
           <div>
             <p className="mb-3 text-sm font-bold uppercase tracking-wider text-white/90">More</p>
             <ul className="space-y-2 text-sm text-white/65">
+              <li>
+                <a href="#about" className="hover:text-white">
+                  About
+                </a>
+              </li>
               <li>
                 <a href="#faq" className="hover:text-white">
                   FAQ
@@ -607,6 +660,7 @@ const Home = () => {
           .
         </p>
       </footer>
+      <OptionalAdSenseLoader />
     </div>
   );
 };

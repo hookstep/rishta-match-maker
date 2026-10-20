@@ -12,6 +12,9 @@ import Discover from "./pages/Discover";
 import Admin from "./pages/Admin";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import SafetyOnline from "./pages/SafetyOnline";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +54,9 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<HomeRoute />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/safety" element={<SafetyOnline />} />
             <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/discover" element={<ProtectedRoute><Discover /></ProtectedRoute>} />

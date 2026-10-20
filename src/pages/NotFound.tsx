@@ -1,8 +1,19 @@
 import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
+import { applyPageSeo } from "@/lib/seo";
+import { siteName } from "@/lib/site";
 
 const NotFound = () => {
   const location = useLocation();
+
+  useLayoutEffect(() => {
+    applyPageSeo({
+      title: `Page not found — ${siteName}`,
+      description: "The page you requested does not exist.",
+      noindex: true,
+      omitCanonical: true,
+    });
+  }, [location.pathname]);
 
   useEffect(() => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);

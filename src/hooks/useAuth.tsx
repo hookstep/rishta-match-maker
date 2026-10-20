@@ -41,13 +41,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     setEntitlementsLoading(true);
-    const [adminRes, paidRes] = await Promise.all([
-      supabase.rpc("is_admin", { _user_id: uid }),
-      supabase.rpc("is_paid_subscriber", { _user_id: uid }),
-    ]);
-    setIsAdmin(!!adminRes.data);
-    setIsPaid(!!paidRes.data);
-    setEntitlementsLoading(false);
+    try {
+      const [adminRes, paidRes, rolesRes] = await Promise.all([
+        supabase.rpc("is_admin", { _user_id: uid }),
+        supabase.rpc("is_paid_subscriber", { _user_id: uid }),
+        // Select all roles for this user — avoids PostgREST/enum mismatches on `.eq("role", "admin")`.
+        supabase.from("user_roles").select("role").eq("user_id", uid),
+      ]);
+      const fromRpc = !adminRes.error && !!adminRes.data;
+      const fromTable =
+        !rolesRes.error &&
+        (rolesRes.data ?? []).some((row) => String(row.role).toLowerCase() === "admin");
+      setIsAdmin(fromRpc || fromTable);
+      if (adminRes.error) {
+        console.warn("[auth] is_admin RPC failed:", adminRes.error.message, adminRes.error);
+      }
+      if (rolesRes.error) {
+        console.warn("[auth] user_roles lookup:", rolesRes.error.message, rolesRes.error);
+      }
+      setIsPaid(!paidRes.error && !!paidRes.data);
+      if (paidRes.error) {
+        console.warn("[auth] is_paid_subscriber RPC failed:", paidRes.error.message);
+      }
+    } finally {
+      setEntitlementsLoading(false);
+    }
   }, [user?.id]);
 
   useEffect(() => {

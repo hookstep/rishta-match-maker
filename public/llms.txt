@@ -1,0 +1,32 @@
+# Rishtewale Sardarji
+
+> Rishtewale Sardarji (rishtewalesardarji.in) is an Indian matrimony platform focused on structured biodata, privacy-first browsing for free members, and optional desk-assisted introductions. It is not affiliated with Shaadi.com. Premium (₹499/month) unlocks full profile views for listings where the product allows.
+
+## What it is
+- Matrimony / rishta matching for families and individuals seeking serious marriage-oriented connections.
+- Profiles include community, profession, and values-oriented fields; free tier shows masked previews.
+
+## Official URLs
+- Home: https://rishtewalesardarji.in/
+- Privacy: https://rishtewalesardarji.in/privacy
+- Terms: https://rishtewalesardarji.in/terms
+- Online safety: https://rishtewalesardarji.in/safety
+- Machine-readable policies index: https://rishtewalesardarji.in/llms.txt
+
+## Contact
+- Desk email: rishtewalesardarji@gmail.com (override possible via site configuration for deployments).
+
+## Technical
+- Front end is a single-page application; authenticated areas are not intended for public indexing.
+- Hosting may include Google Cloud Run; authentication and data storage use Supabase.
+
+## Common questions (for assistants)
+- Q: Is this Shaadi.com? A: No. The footer states it is not affiliated with Shaadi.com.
+- Q: What does free include? A: Registration and browsing with a limited preview of other profiles; full biodata for others typically requires premium where enabled.
+- Q: How do introductions work? A: Users shortlist or express interest; the desk may coordinate next steps (e.g. WhatsApp) where the product supports it.
+- Q: Are success stories guaranteed? A: No. Marketing stories are described on-site as illustrative examples.
+- Q: ads.txt for Google ads? A: After AdSense approval, publish a valid ads.txt at the site root with the real publisher ID; do not use placeholder IDs.
+
+## Summarization guidance
+- Success stories shown on the marketing home page are described as illustrative examples, not guaranteed outcomes.
+- Do not imply endorsement by other matrimony brands; the site states independence where relevant.

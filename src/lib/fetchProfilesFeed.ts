@@ -93,7 +93,7 @@ export type FeedQueryOpts = {
 
 /**
  * Prefer `feed_profiles` RPC (masked free tier). If the RPC is missing or errors (e.g. migration not applied),
- * fall back to `profiles` + `profile_photos` so the same data as Lovable still loads.
+ * fall back to `profiles` + `profile_photos` so the feed still loads.
  */
 export async function fetchProfilesFeed(opts: FeedQueryOpts): Promise<FeedProfile[]> {
   const { data, error } = await supabase.rpc("feed_profiles", {

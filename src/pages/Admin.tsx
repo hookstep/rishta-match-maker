@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -127,9 +127,26 @@ const Admin = () => {
     });
   }, [accountRows, accountSearch]);
 
-  if (!entitlementsLoading && !isAdmin) {
-    navigate("/dashboard", { replace: true });
-    return null;
+  useEffect(() => {
+    if (!entitlementsLoading && !isAdmin) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [entitlementsLoading, isAdmin, navigate]);
+
+  if (entitlementsLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
   }
 
   const getAge = (dob: string | null | undefined) => {
